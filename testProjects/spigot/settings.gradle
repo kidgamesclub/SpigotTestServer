@@ -1,0 +1,11 @@
+pluginManagement {
+
+  repositories {
+    gradlePluginPortal()
+    google()
+    maven {url "https://dl.bintray.com/mverse-io/mverse-public"}
+  }
+}
+
+rootProject.name = "TestSpigot"
+

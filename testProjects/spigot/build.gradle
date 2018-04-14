@@ -1,0 +1,33 @@
+buildscript {
+  dependencies {
+    classpath fileTree(dir: '../../build/libs', include: ['*.jar'])
+    classpath("de.undercouch:gradle-download-task:1.2")
+  }
+}
+
+plugins {
+  id "org.jetbrains.kotlin.jvm" version "1.2.31"
+
+  id "java"
+  id "groovy"
+  id "io.mverse.project" version "0.5.16"
+}
+
+apply plugin: 'club.kidgames.spigot'
+
+repositories {
+  maven {url "https://dl.bintray.com/mverse-io/mverse-public"}
+}
+
+spigot {
+  buildToolsLocation = "../../../buildTools/BuildTools.jar"
+  spigotBuildDir = "../../../buildTools"
+  serverJarLocation = "lib/spigot-1.12.2.jar"
+}
+
+dependencies {
+  spigotPlugin "club.kidgames:LiquidMessages:+"
+  testCompile fileTree(dir: '../../build/libs', include: ['*.jar'])
+  implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.2.31'
+
+}
