@@ -6,6 +6,9 @@ build/
 **/out
 .DS_STORE
 
+# This is where downloaded plugins and jars go.  Don't want these checked into vcs
+lib
+
 # Ignore Gradle GUI config
 gradle-app.setting
 

@@ -5,16 +5,18 @@ import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency
+import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.JavaExec
-import org.gradle.internal.impldep.bsh.commands.dir
 import org.gradle.kotlin.dsl.creating
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.repositories
+import org.gradle.kotlin.dsl.the
 import java.io.File
 import java.net.URL
+import java.util.*
 
 open class SpigotBuildPlugin : Plugin<Project> {
   lateinit var project: Project
@@ -41,6 +43,10 @@ open class SpigotBuildPlugin : Plugin<Project> {
       val runtime by target.configurations
       val compile by target.configurations
 
+      // This makes sure all spigotPlugin declarations are also included in the compile classpath
+      // for the model
+      compile.extendsFrom(spigotPlugin)
+
       afterEvaluate {
 
         buildDir.mkdirs()
@@ -49,7 +55,7 @@ open class SpigotBuildPlugin : Plugin<Project> {
         val spigot: SpigotExtension by project.extensions
 
         dependencies {
-          "compile"("org.spigotmc:spigot-api:${spigot.spigotVersion}")
+          "compile"("org.spigotmc:spigot-api:${spigot.version}")
           "compile"(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
           if (spigot.serverJarLocation != null) {
             "compile"(files(spigot.serverJarLocation!!))
@@ -67,8 +73,8 @@ open class SpigotBuildPlugin : Plugin<Project> {
         }
 
         val buildToolsJarFile = spigotBuildDir.resolve("BuildTools.jar")
-        val testServer = buildDir.resolve("testServer")
-        val pluginsFolder = testServer.resolve("plugins")
+        val testServerDir = buildDir.resolve("testServer")
+        val pluginsFolder = testServerDir.resolve("plugins")
         val existingServerJar = project.getSpigotServer()
 
         val deploy by tasks.creating(Copy::class.java) {
@@ -78,10 +84,28 @@ open class SpigotBuildPlugin : Plugin<Project> {
         }
 
         val copyServerJar by tasks.creating(Copy::class.java) {
-          doFirst { testServer.mkdirs() }
+          doFirst { testServerDir.mkdirs() }
           from(project.getSpigotServer())
           rename { "server.jar" }
-          into(testServer)
+          into(testServerDir)
+        }
+
+
+        val eula = testServerDir.resolve("eula.txt")
+        val createServerEULA by tasks.creating(Copy::class.java) {
+          doFirst {
+            if(!eula.exists()) {
+              eula.createNewFile()
+            }
+
+            val props = Properties()
+            props.load(eula.reader())
+            props.setProperty("eula", spigot.isAcceptEula.toString())
+            props.store(eula.writer(), "By changing the settings below, you agree to the EULA:")
+          }
+          from(project.getSpigotServer())
+          rename { "server.jar" }
+          into(testServerDir)
         }
 
         val copyPluginJars by tasks.creating(Copy::class.java) {
@@ -94,9 +118,9 @@ open class SpigotBuildPlugin : Plugin<Project> {
         }
 
         val copyServerFiles by tasks.creating(Copy::class.java) {
-          doFirst { testServer.mkdirs() }
+          doFirst { testServerDir.mkdirs() }
           from("config/serverfiles")
-          into(testServer)
+          into(testServerDir)
         }
 
         val copyProjectPlugin by tasks.creating(Copy::class.java) {
@@ -132,15 +156,45 @@ open class SpigotBuildPlugin : Plugin<Project> {
           arrayOf(buildSpigot)
         }
 
+        val writePluginYml by tasks.creating(WritePluginYml::class.java){}
+
+        val writeMetadataFiles by tasks.creating {
+          doFirst {
+            val pluginMetadataFile = mainOutput.resourcesDir
+                .aside{ this.mkdirs() }
+                .resolve("plugin-metadata.yml")
+
+            val writer = pluginMetadataFile.writer()
+            writer.write("plugins:\n")
+            spigotPlugin.resolvedConfiguration.firstLevelModuleDependencies.forEach {
+              val path: String? = it.moduleArtifacts.firstOrNull()?.file?.absolutePath
+              if (path != null) {
+                writer.write("  ${it.moduleName}: $path\n")
+              }
+            }
+            buildDir.resolve("lib").walkTopDown().forEach { file ->
+              val parts = file.name.split(":")
+              if (parts.isNotEmpty() && parts[0].isNotEmpty()) {
+                writer.write("  ${parts[0]}: ${file.name}")
+              }
+            }
+
+            writer.write("server:\n")
+            writer.write("  location: $testServerDir\n")
+            writer.flush()
+            writer.close()
+          }
+        }
+
         val prepareDevServer by tasks.creating {
-          dependsOn(*serverJarTasks, copyServerFiles, copyServerJar, copyPluginJars, copyProjectPlugin)
+          dependsOn(*serverJarTasks, createServerEULA, writePluginYml, writeMetadataFiles, copyServerFiles, copyServerJar, copyPluginJars, copyProjectPlugin)
         }
 
         val startDevServer by tasks.creating(JavaExec::class.java) {
           dependsOn(prepareDevServer)
           classpath(compile, runtime)
           main = "org.bukkit.craftbukkit.Main"
-          workingDir = testServer
+          workingDir = testServerDir
           standardInput = System.`in`
         }
 
@@ -174,15 +228,16 @@ fun Project.getSpigotServer(): File? {
   val serverJar = if (declaredServerJarLocation != null) this.file(declaredServerJarLocation) else null
   if (serverJar != null && !serverJar.exists()) {
     throw GradleException("Specified server jar location $serverJar but ${serverJar.absoluteFile} doesn't exist")
-  } else if(serverJar != null) {
+  } else if (serverJar != null) {
     return serverJar
   } else {
     val spigotServer by this.configurations.creating
 
     return try {
-      spigotServer.withDependencies {
-        val dependency = DefaultExternalModuleDependency("org.spigotmc", "spigot", spigot.spigotVersion)
-        add(dependency.setTransitive(false))
+      spigotServer.aside {
+        val dependency = DefaultExternalModuleDependency("org.spigotmc", "spigot", spigot.version)
+        dependency.isTransitive = false
+        this.dependencies.add(dependency)
       }.resolve().firstOrNull()
     } catch (e: Exception) {
       null  //Error resolving.  Need to manually process

@@ -9,6 +9,7 @@ import org.gradle.util.GFileUtils.copyFile
 import org.gradle.util.GFileUtils.writeFile
 import org.junit.Test
 import java.io.File
+import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 
 val debugPort = Integer.parseInt(System.getenv("debugPort") ?: "0")
@@ -31,7 +32,7 @@ class SpigotProjectPluginTest {
   @Test
   fun testSimpleGradleProject() {
     val result = setUpTestProject("spigot")
-        .withArguments("clean", "build", "--stacktrace")
+        .withArguments("clean", "build", "--stacktrace", "--info")
         .build()
   }
 
@@ -119,6 +120,7 @@ class SpigotProjectPluginTest {
     println("Starting tests...")
     gradleRunner = GradleRunner.create()
         .withProjectDir(testProjectDir)
+        .withGradleVersion("4.6-rc-1")
         .forwardOutput()
         .withPluginClasspath()
     return gradleRunner!!

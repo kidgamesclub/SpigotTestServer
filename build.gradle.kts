@@ -58,7 +58,10 @@ dependencyManagement {
     dependency("com.github.johnrengelman.shadow:com.github.johnrengelman.shadow.gradle.plugin:1.2.3")
     dependency("club.kidgames:liqp:0.7.13")
     dependency("club.kidgames:LiquidMessages:0.7.13")
+
     dependency("io.mverse.project:io.mverse.project.gradle.plugin:0.5.+")
+
+
     dependency("me.clip:PlaceholderAPI:2.5.+")
     dependency("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")
     dependency("org.bukkit:bukkit:1.12.2-R0.1-SNAPSHOT")
@@ -71,7 +74,6 @@ dependencies {
   compile("commons-io:commons-io:2.4")
   compile(files("lib/spigot-1.12.2.jar"))
   compile("club.kidgames:liqp:0.7.13")
-  compileOnly("me.clip:PlaceholderAPI")
   testCompile("me.clip:PlaceholderAPI")
   compileOnly("org.spigotmc:spigot-api")
   compileOnly("org.bukkit:bukkit")

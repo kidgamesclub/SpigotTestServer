@@ -1,5 +1,4 @@
 plugins {
-  id "org.jetbrains.kotlin.jvm" version "1.2.31"
   id "java"
   id "groovy"
   id "io.mverse.project" version "0.5.16"

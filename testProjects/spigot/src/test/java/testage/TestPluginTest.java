@@ -1,9 +1,9 @@
 package testage;
 
+import club.kidgames.junit.MinecraftTestServer;
+import club.kidgames.liquid.plugin.LiquidPlugin;
 import org.junit.Rule;
 import org.junit.Test;
-
-import club.kidgames.junit.MinecraftTestServer;
 
 public class TestPluginTest {
 
@@ -12,7 +12,9 @@ public class TestPluginTest {
 
   @Test
   public void testMinecraftServer() {
-    TestPlugin plugin = testServer.loadPlugin(TestPlugin.class);
+    LiquidPlugin plugin = testServer.loadPlugin("LiquidMessages");
+
+    System.out.println(plugin.getName());
   }
 
 }
