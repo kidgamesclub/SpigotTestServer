@@ -32,7 +32,7 @@ class MinecraftTestServer : ExternalResource() {
     }
 
     Main.main(arrayOf("--plugins ${serverDir.resolve("plugins").absolutePath}",
-        "--worlds ${serverDir.absolutePath}"))
+        "--world-dir ${serverDir.absolutePath}"))
 
     var count = 0
 
