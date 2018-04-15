@@ -8,7 +8,7 @@ import org.gradle.kotlin.dsl.the
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 
-inline fun <reified T> T.check(message: String = "The value provided for the ${T::class.java} was invalid"): T {
+inline fun <reified T:Any> T?.check(message: String = "The value provided for the ${T::class.java} was invalid"): T {
   return this ?: throw IllegalArgumentException(message)
 }
 
@@ -27,7 +27,7 @@ val pluginMetadataFileName = "plugin-metadata.yml"
 typealias StringMap = Map<String, Any?>
 
 val pluginMetadata: StringMap by lazy {
-  pluginMetadataFileName.asResource()?.run {
+  pluginMetadataFileName.readResource("/$pluginMetadataFileName")?.run {
     return@lazy try {
       Yaml().load(this) as StringMap
     } catch (e: Exception) {
@@ -57,4 +57,15 @@ val serverLocation: File? by lazy {
       ?.run { this as Map<String, String> }
       ?.get("location")
       ?.run { File(this) }
+}
+
+fun <T:Any> T.readResource(name:String):String? {
+  return this::class.java.getResourceAsStream(name)
+      ?.run { this.reader().readText() }
+}
+
+fun String?.writeTo(path: String) {
+  this?.run {
+    File(path).writeText(this)
+  }
 }

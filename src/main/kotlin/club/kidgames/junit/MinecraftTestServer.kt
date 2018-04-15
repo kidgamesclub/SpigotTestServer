@@ -3,17 +3,23 @@ package club.kidgames.junit
 import club.kidgames.spigot.check
 import club.kidgames.spigot.pluginFiles
 import club.kidgames.spigot.pluginMetadata
+import club.kidgames.spigot.readResource
 import club.kidgames.spigot.serverLocation
+import club.kidgames.spigot.writeTo
 import org.bukkit.Bukkit
 import org.bukkit.Server
 import org.bukkit.craftbukkit.Main
 import org.bukkit.craftbukkit.v1_12_R1.CraftServer
 import org.bukkit.plugin.PluginManager
+import org.bukkit.plugin.java.JavaPlugin
+import org.gradle.internal.impldep.org.bouncycastle.crypto.tls.ConnectionEnd.server
 import org.junit.rules.ExternalResource
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
-class MinecraftTestServer : ExternalResource() {
+class MinecraftTestServer(vararg plugins:String)  : ExternalResource() {
+
+  val plugins:List<String> = listOf(*plugins)
 
   private val server = AtomicReference<Server>()
 
@@ -22,17 +28,13 @@ class MinecraftTestServer : ExternalResource() {
 
   override fun before() {
 
-    val serverDir = serverLocation ?: File(".")
-    val isSameDir = serverDir == File(".")
+    val thisDir = File(".")
+    val serverDir = serverLocation ?: thisDir
 
-    if (!isSameDir) {
-      serverDir.resolve("eula.txt").readText().run {
-        File(".").resolve("eula.txt").writeText(this)
-      }
-    }
+    println("Running minecraft from ${thisDir.absolutePath}")
+    readResource("/eula.txt").writeTo("eula.txt")
 
-    Main.main(arrayOf("--plugins ${serverDir.resolve("plugins").absolutePath}",
-        "--world-dir ${serverDir.absolutePath}"))
+    Main.main(emptyArray())
 
     var count = 0
 
@@ -52,6 +54,9 @@ class MinecraftTestServer : ExternalResource() {
         }
       }
     }
+    for (plugin in plugins) {
+      this.loadPlugin<JavaPlugin>(plugin)
+    }
   }
 
   val pluginManager: PluginManager
@@ -62,8 +67,8 @@ class MinecraftTestServer : ExternalResource() {
       pluginManager.isPluginEnabled(name) -> pluginManager.getPlugin(name)
       else -> pluginFiles[name]
           ?.run { craftServer.pluginManager.loadPlugin(this) }
-          ?.check("No plugin exists with the key $name. These are " +
-              "the keys we know about: ${pluginMetadata.keys}")
+          .check("No plugin exists with the key $name. These are " +
+              "the keys we know about: ${pluginFiles.keys}")
     } as P
   }
 

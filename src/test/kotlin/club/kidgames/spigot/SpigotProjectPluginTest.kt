@@ -32,7 +32,7 @@ class SpigotProjectPluginTest {
   @Test
   fun testSimpleGradleProject() {
     val result = setUpTestProject("spigot")
-        .withArguments("clean", "build", "--stacktrace", "--info")
+        .withArguments("clean", "spigotTest", "--stacktrace", "--info")
         .build()
   }
 
@@ -104,17 +104,17 @@ class SpigotProjectPluginTest {
 
     println("Copying generated testkit gradle properties (supports codecov and other stuff)")
 
-    //todo: Load from classpath
-    var testkitProperties = File("build/testkit/testkit-gradle.properties")
-        .readText(Charsets.UTF_8)
-    if (this.isDebug) {
-      checkDebugPort()
-      testkitProperties += " -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=$debugPort"
-    }
-
-    testkitProperties += " -Xmx2g"
-    writeFile(testkitProperties,
-        File(testProjectDir, "gradle.properties"))
+//    //todo: Load from classpath
+//    var testkitProperties = File("build/testkit/testkit-gradle.properties")
+//        .readText(Charsets.UTF_8)
+//    if (this.isDebug) {
+//      checkDebugPort()
+//      testkitProperties += " -agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=$debugPort"
+//    }
+//
+//    testkitProperties += " -Xmx2g"
+//    writeFile(testkitProperties,
+//        File(testProjectDir, "gradle.properties"))
 
     Assertions.assertThat(buildFile).exists()
     println("Starting tests...")
@@ -122,6 +122,7 @@ class SpigotProjectPluginTest {
         .withProjectDir(testProjectDir)
         .withGradleVersion("4.6-rc-1")
         .forwardOutput()
+        .withDebug(true)
         .withPluginClasspath()
     return gradleRunner!!
   }

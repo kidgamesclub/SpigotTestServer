@@ -8,6 +8,7 @@ import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDepen
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.JavaExec
+import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.creating
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
@@ -32,7 +33,6 @@ open class SpigotBuildPlugin : Plugin<Project> {
     project.extensions.add("spigot", SpigotExtension())
 
     project.run {
-
       repositories {
         mavenLocal()
       }
@@ -46,6 +46,10 @@ open class SpigotBuildPlugin : Plugin<Project> {
       // This makes sure all spigotPlugin declarations are also included in the compile classpath
       // for the model
       compile.extendsFrom(spigotPlugin)
+      val java = the<JavaPluginConvention>()
+      val spigotTest by java.sourceSets.creating
+      spigotTest.compileClasspath += project.mainOutput.classesDirs
+      spigotTest.compileClasspath += project.configurations["testCompile"]
 
       afterEvaluate {
 
@@ -77,6 +81,23 @@ open class SpigotBuildPlugin : Plugin<Project> {
         val pluginsFolder = testServerDir.resolve("plugins")
         val existingServerJar = project.getSpigotServer()
 
+        val spigotTests by tasks.creating(Test::class.java) {
+          val self = this
+
+          doFirst {
+            project.getSpigotServer()!!.run {
+              self.classpath += project.files(this)
+              println("CLASSPATH = ${self.classpath}")
+            }
+          }
+          debug = true
+          workingDir = testServerDir
+          classpath += spigotTest.output
+//          classpath += project.configurations["testCompile"]
+          testClassesDirs = spigotTest.output.classesDirs
+
+        }
+
         val deploy by tasks.creating(Copy::class.java) {
           dependsOn("build")
           from(buildDir.resolve("libs"))
@@ -101,7 +122,9 @@ open class SpigotBuildPlugin : Plugin<Project> {
             val props = Properties()
             props.load(eula.reader())
             props.setProperty("eula", spigot.isAcceptEula.toString())
-            props.store(eula.writer(), "By changing the settings below, you agree to the EULA:")
+            props.store(eula.writer(), EULA)
+            props.store(project.mainOutput.resourcesDir.aside { mkdirs() }.resolve("eula.txt").writer(),
+                EULA)
           }
           from(project.getSpigotServer())
           rename { "server.jar" }
@@ -157,6 +180,7 @@ open class SpigotBuildPlugin : Plugin<Project> {
         }
 
         val writePluginYml by tasks.creating(WritePluginYml::class.java){}
+        tasks["jar"].dependsOn(writePluginYml)
 
         val writeMetadataFiles by tasks.creating {
           doFirst {
@@ -165,7 +189,10 @@ open class SpigotBuildPlugin : Plugin<Project> {
                 .resolve("plugin-metadata.yml")
 
             val writer = pluginMetadataFile.writer()
+            val jarName = "${project.name}-${project.version}.jar"
+            val jarPath = buildDir.resolve("libs").resolve(jarName)
             writer.write("plugins:\n")
+            writer.write("  ${project.name}: ${jarPath.absolutePath}\n")
             spigotPlugin.resolvedConfiguration.firstLevelModuleDependencies.forEach {
               val path: String? = it.moduleArtifacts.firstOrNull()?.file?.absolutePath
               if (path != null) {
@@ -198,7 +225,7 @@ open class SpigotBuildPlugin : Plugin<Project> {
           standardInput = System.`in`
         }
 
-        tasks["test"].dependsOn(prepareDevServer)
+        spigotTests.dependsOn(prepareDevServer, "test")
       }
 
     }
@@ -246,3 +273,5 @@ fun Project.getSpigotServer(): File? {
     }
   }
 }
+
+val EULA = "By changing the setting below to TRUE you are indicating your agreement to our EULA (https://account.mojang.com/documents/minecraft_eula)."

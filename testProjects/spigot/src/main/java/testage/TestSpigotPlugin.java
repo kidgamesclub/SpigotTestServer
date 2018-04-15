@@ -2,6 +2,6 @@ package testage;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class TestPlugin extends JavaPlugin {
+public class TestSpigotPlugin extends JavaPlugin {
 
 }

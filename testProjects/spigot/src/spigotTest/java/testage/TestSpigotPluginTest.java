@@ -5,14 +5,14 @@ import club.kidgames.liquid.plugin.LiquidPlugin;
 import org.junit.Rule;
 import org.junit.Test;
 
-public class TestPluginTest {
+public class TestSpigotPluginTest {
 
   @Rule
-  public MinecraftTestServer testServer = new MinecraftTestServer();
+  public MinecraftTestServer testServer = new MinecraftTestServer("TestSpigotPlugin");
 
   @Test
   public void testMinecraftServer() {
-    LiquidPlugin plugin = testServer.loadPlugin("LiquidMessages");
+    TestSpigotPlugin plugin = testServer.loadPlugin("TestSpigotPlugin");
 
     System.out.println(plugin.getName());
   }

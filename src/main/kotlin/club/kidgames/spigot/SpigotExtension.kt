@@ -7,7 +7,6 @@ open class SpigotExtension {
   var buildToolsLocation:String = "https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar"
   var spigotBuildDir = "spigotBuild"
   var isAcceptEula = false
-
-
+  lateinit var main:String
 }
 
