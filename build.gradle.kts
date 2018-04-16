@@ -36,8 +36,11 @@ gradlePlugin {
   }
 }
 
+
+
 mverse {
-  groupId = "club.kidgames"
+  groupId = "club.kidgames.spigot"
+
   modules {
     compile("guava")
     compile("bukkit")
@@ -95,24 +98,3 @@ shadowJar.from(project.sourceSets.main!!.output)
 shadowJar.classifier = null
 
 tasks["test"].dependsOn("jar")
-
-afterEvaluate {
-  publishing {
-    (publications) {
-      val nebula: MavenPublication by this.getting
-
-      "spigotTestServer"(MavenPublication::class) {
-        this.version = project.version.toString()
-        this.groupId = "club.kidgames.spigot"
-        this.artifactId = "club.kidgames.spigot.gradle.plugin"
-        from(components["java"])
-        setArtifacts(nebula.artifacts)
-      }
-    }
-  }
-
-  bintray {
-    setPublications("spigotTestServer")
-  }
-}
-
