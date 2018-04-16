@@ -94,7 +94,7 @@ shadowJar.configurations = listOf(project.configurations.shadow)
 shadowJar.from(project.sourceSets.main!!.output)
 shadowJar.classifier = null
 
-tasks["test"].dependsOn(tasks["jar"])
+tasks["test"].dependsOn("jar")
 
 afterEvaluate {
   publishing {
