@@ -29,12 +29,12 @@ class SpigotProjectPluginTest {
   val isDebug: Boolean
     get() = debugPort > 0
 
-  @Test
-  fun testSimpleGradleProject() {
-    val result = setUpTestProject("spigot")
-        .withArguments("clean", "spigotTest", "--stacktrace", "--info")
-        .build()
-  }
+//  @Test
+//  fun testSimpleGradleProject() {
+//    val result = setUpTestProject("spigot")
+//        .withArguments("clean", "spigotTest", "--stacktrace", "--info")
+//        .build()
+//  }
 
 //  @Test
 //  fun testSimpleGradleProjectTasks() {

@@ -1,4 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import io.mverse.gradle.main
+import io.mverse.gradle.sourceSets
 import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 import org.codehaus.groovy.tools.shell.util.Logger.io
 import org.gradle.api.internal.file.pattern.PatternMatcherFactory.compile
@@ -38,7 +40,6 @@ mverse {
   groupId = "club.kidgames"
   modules {
     compile("guava")
-    compile("kotlin-stdlib")
     compile("bukkit")
     compile("gradle-download-task")
   }
@@ -60,8 +61,6 @@ dependencyManagement {
     dependency("club.kidgames:LiquidMessages:0.7.13")
 
     dependency("io.mverse.project:io.mverse.project.gradle.plugin:0.5.+")
-
-
     dependency("me.clip:PlaceholderAPI:2.5.+")
     dependency("org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT")
     dependency("org.bukkit:bukkit:1.12.2-R0.1-SNAPSHOT")
@@ -73,27 +72,27 @@ dependencies {
   implementation(gradleKotlinDsl())
   compile("commons-io:commons-io:2.4")
   compile(files("lib/spigot-1.12.2.jar"))
-  compile("club.kidgames:liqp:0.7.13")
   testCompile("me.clip:PlaceholderAPI")
   compileOnly("org.spigotmc:spigot-api")
-  compileOnly("org.bukkit:bukkit")
+  shadow("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 }
 
 afterEvaluate {
   buildDir.resolve("mversion").writeText(project.version.toString())
 }
 
-val testJar by tasks.creating(Jar::class.java) {
+val testJar by tasks.creating(ShadowJar::class.java) {
   dependsOn("classes")
-//  this.into(buildDir.resolve("project-plugin.jar"))
-  this.from(the<JavaPluginConvention>().sourceSets["main"].output.classesDirs)
+  configurations = listOf(project.configurations.shadow)
+  from(project.sourceSets.main!!.output.classesDirs)
+  classifier = null
 }
+
+
+val shadowJar = tasks.replace("jar", ShadowJar::class.java)
+shadowJar.configurations = listOf(project.configurations.shadow)
+shadowJar.from(project.sourceSets.main!!.output)
+shadowJar.classifier = null
 
 tasks["test"].dependsOn(tasks["jar"])
 
-val shadowJar:ShadowJar by tasks
-shadowJar.dependencies {
-  exclude(dependency(":spigot-api"))
-
-  include(dependency(":commons-lang"))
-}

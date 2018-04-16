@@ -8,5 +8,6 @@ open class SpigotExtension {
   var spigotBuildDir = "spigotBuild"
   var isAcceptEula = false
   lateinit var main:String
+  var isDebug: Boolean = false
 }
 

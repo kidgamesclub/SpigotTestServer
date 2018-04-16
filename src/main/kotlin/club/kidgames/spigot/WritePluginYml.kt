@@ -12,7 +12,7 @@ open class WritePluginYml : AbstractTask() {
 
     val pluginYmlFile = project.mainOutput
         .resourcesDir
-        .aside { this.mkdirs() }
+        .apply { mkdirs() }
         .resolve("plugin.yml")
     val pluginYml: MutableMap<String, Any?> = when {
       pluginYmlFile.exists() -> Yaml().load(pluginYmlFile.readText())

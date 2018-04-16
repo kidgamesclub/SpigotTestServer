@@ -1,14 +1,9 @@
 package club.kidgames.spigot
 
-import org.gradle.api.Project
-import org.gradle.api.plugins.JavaPluginConvention
-import org.gradle.api.tasks.SourceSetOutput
-import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.the
 import org.yaml.snakeyaml.Yaml
 import java.io.File
 
-inline fun <reified T:Any> T?.check(message: String = "The value provided for the ${T::class.java} was invalid"): T {
+inline fun <reified T : Any> T?.check(message: String = "The value provided for the ${T::class.java} was invalid"): T {
   return this ?: throw IllegalArgumentException(message)
 }
 
@@ -27,13 +22,11 @@ val pluginMetadataFileName = "plugin-metadata.yml"
 typealias StringMap = Map<String, Any?>
 
 val pluginMetadata: StringMap by lazy {
-  pluginMetadataFileName.readResource("/$pluginMetadataFileName")?.run {
-    return@lazy try {
-      Yaml().load(this) as StringMap
-    } catch (e: Exception) {
-      null as StringMap
-    }
-  } ?: emptyMap<String, Any?>()
+  val metadataText = (pluginMetadataFileName.readResource("/$pluginMetadataFileName")
+      ?: File(pluginMetadataFileName).takeIf { it.exists() }?.readText()
+      ?: "plugins: ")
+
+  return@lazy Yaml().load(metadataText) as StringMap
 }
 
 val pluginMetadataKey = "plugins"
@@ -45,21 +38,7 @@ val pluginFiles: Map<String, File> by lazy {
       ?: emptyMap()
 }
 
-val Project.mainOutput: SourceSetOutput
-  get() {
-    return the<JavaPluginConvention>()
-        .sourceSets["main"]
-        .output
-  }
-
-val serverLocation: File? by lazy {
-  pluginMetadata["server"]
-      ?.run { this as Map<String, String> }
-      ?.get("location")
-      ?.run { File(this) }
-}
-
-fun <T:Any> T.readResource(name:String):String? {
+fun <T : Any> T.readResource(name: String): String? {
   return this::class.java.getResourceAsStream(name)
       ?.run { this.reader().readText() }
 }
@@ -69,3 +48,11 @@ fun String?.writeTo(path: String) {
     File(path).writeText(this)
   }
 }
+
+val serverLocation: File? by lazy {
+  pluginMetadata["server"]
+      ?.run { this as Map<String, String> }
+      ?.get("location")
+      ?.run { File(this) }
+}
+

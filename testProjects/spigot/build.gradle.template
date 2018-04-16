@@ -16,6 +16,7 @@ spigot {
     serverJarLocation = "lib/spigot-1.12.2.jar"
     isAcceptEula = true
     main = "testage.TestSpigotPlugin"
+    isDebug=true
 }
 
 test {
@@ -23,6 +24,6 @@ test {
 }
 
 dependencies {
-  spigotPlugin "club.kidgames:LiquidMessages:+"
+  //spigotPlugin "club.kidgames:LiquidMessages:+"
   testCompile fileTree(dir: '../../libs', include: ['*.jar'])
 }
