@@ -43,7 +43,6 @@ mverse {
 
   modules {
     compile("guava")
-    compile("bukkit")
     compile("gradle-download-task")
   }
 
