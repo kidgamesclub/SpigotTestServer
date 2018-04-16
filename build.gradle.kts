@@ -96,3 +96,23 @@ shadowJar.classifier = null
 
 tasks["test"].dependsOn(tasks["jar"])
 
+afterEvaluate {
+  publishing {
+    (publications) {
+      val nebula: MavenPublication by this.getting
+
+      "spigotTestServer"(MavenPublication::class) {
+        this.version = project.version.toString()
+        this.groupId = "club.kidgames.spigot"
+        this.artifactId = "club.kidgames.spigot.gradle.plugin"
+        from(components["java"])
+        setArtifacts(nebula.artifacts)
+      }
+    }
+  }
+
+  bintray {
+    setPublications("spigotTestServer")
+  }
+}
+
