@@ -4,9 +4,7 @@ build/
 .idea/
 .idea/
 **/out
-.DS_STORE
-
-**/.DS_Store/
+.DS_Store
 
 # This is where downloaded plugins and jars go.  Don't want these checked into vcs
 lib
